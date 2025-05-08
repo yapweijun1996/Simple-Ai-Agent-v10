@@ -14,6 +14,18 @@ const ChatController = (function() {
     let lastThinkingContent = '';
     let lastAnswerContent = '';
 
+    // Add helper to robustly extract JSON tool calls (handles markdown fences)
+    function extractToolCall(text) {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return null;
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (err) {
+            console.warn('Tool JSON parse error:', err, 'from', jsonMatch[0]);
+            return null;
+        }
+    }
+
     const cotPreamble = `**Chain of Thought Instructions:**
 1.  **Understand:** Briefly rephrase the core problem or question.
 2.  **Deconstruct:** Break the problem down into smaller, logical steps needed to reach the solution.
@@ -316,10 +328,7 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 );
                 
                 // Intercept JSON tool call in streaming mode
-                let toolCall = null;
-                try {
-                    toolCall = JSON.parse(fullReply.trim());
-                } catch (e) {}
+                const toolCall = extractToolCall(fullReply);
                 if (toolCall && toolCall.tool && toolCall.arguments) {
                     await processToolCall(toolCall);
                     return;
@@ -377,10 +386,7 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 console.log("GPT non-streaming reply:", reply);
 
                 // Intercept tool call JSON
-                let toolCall = null;
-                try {
-                    toolCall = JSON.parse(reply);
-                } catch (e) {}
+                const toolCall = extractToolCall(reply);
                 if (toolCall && toolCall.tool && toolCall.arguments) {
                     await processToolCall(toolCall);
                     return;
@@ -457,10 +463,7 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 );
                 
                 // Intercept JSON tool call in streaming mode
-                let toolCall = null;
-                try {
-                    toolCall = JSON.parse(fullReply.trim());
-                } catch (e) {}
+                const toolCall = extractToolCall(fullReply);
                 if (toolCall && toolCall.tool && toolCall.arguments) {
                     await processToolCall(toolCall);
                     return;
@@ -518,11 +521,8 @@ Answer: [your final, concise answer based on the reasoning above]`;
                     textResponse = candidate.content.text;
                 }
                 
-                // Intercept JSON tool call in non-streaming mode
-                let toolCall = null;
-                try {
-                    toolCall = JSON.parse(textResponse.trim());
-                } catch (e) {}
+                // Intercept tool call JSON
+                const toolCall = extractToolCall(textResponse);
                 if (toolCall && toolCall.tool && toolCall.arguments) {
                     await processToolCall(toolCall);
                     return;
