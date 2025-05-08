@@ -570,7 +570,9 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 ).join('');
                 const html = `<div class="tool-result" role="group" aria-label="Search results for ${args.query}"><strong>Search results for “${args.query}” (${items.length}):</strong><ul>${htmlItems}</ul></div>`;
                 UIController.addHtmlMessage('ai', html);
-                chatHistory.push({ role: 'assistant', content: html });
+                // Add plain text results to chat history for model processing
+                const plainTextResults = items.map((r, i) => `${i+1}. ${r.title} (${r.url}) - ${r.snippet}`).join('\n');
+                chatHistory.push({ role: 'assistant', content: `Search results for "${args.query}" (${items.length}):\n${plainTextResults}` });
             } catch (err) {
                 console.warn(`Web search failed:`, err);
                 UIController.clearStatus();
@@ -592,7 +594,9 @@ Answer: [your final, concise answer based on the reasoning above]`;
             const snippet = String(result).slice(0, 500);
             const html = `<div class="tool-result" role="group" aria-label="Read content from ${args.url}"><strong>Read from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(snippet)}${String(result).length > 500 ? '...' : ''}</p></div>`;
             UIController.addHtmlMessage('ai', html);
-            chatHistory.push({ role: 'assistant', content: html });
+            // Add plain text snippet to chat history for model processing
+            const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${String(result).length > 500 ? '...' : ''}`;
+            chatHistory.push({ role: 'assistant', content: plainTextSnippet });
         } else if (tool === 'instant_answer') {
             UIController.showStatus(`Retrieving instant answer for "${args.query}"...`);
             result = await ToolsService.instantAnswer(args.query);
