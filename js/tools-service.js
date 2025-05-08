@@ -107,8 +107,19 @@ const ToolsService = (function() {
      */
     async function instantAnswer(query) {
       const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&pretty=1`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Instant Answer API error ${response.status}`);
+      let response;
+      // Try via CORS proxy first to avoid CORS issues
+      try {
+        response = await Utils.fetchWithProxyRetry(url, { method: 'GET' });
+      } catch (proxyErr) {
+        console.warn('Instant Answer proxy fetch failed, falling back to direct fetch:', proxyErr);
+        // Fallback to direct fetch
+        response = await fetch(url);
+      }
+      if (!response.ok) {
+        const errText = await (response.text().catch(() => ''));    
+        throw new Error(`Instant Answer API error ${response.status}: ${errText}`);
+      }
       return response.json();
     }
 
