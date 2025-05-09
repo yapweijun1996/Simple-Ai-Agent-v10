@@ -573,23 +573,6 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 // Add plain text results to chat history for model processing
                 const plainTextResults = items.map((r, i) => `${i+1}. ${r.title} (${r.url}) - ${r.snippet}`).join('\n');
                 chatHistory.push({ role: 'assistant', content: `Search results for "${args.query}" (${items.length}):\n${plainTextResults}` });
-
-                // Automatically read and display content for each search result URL
-                for (const item of items) {
-                    UIController.showStatus(`Reading content from ${item.url}...`);
-                    let content = '';
-                    try {
-                        content = await ToolsService.readUrl(item.url);
-                    } catch (err) {
-                        console.warn(`Failed to read ${item.url}:`, err);
-                    }
-                    UIController.clearStatus();
-                    const snippet = (content || '').slice(0, 1122);
-                    const htmlSnippet = `<div class="tool-result" role="group" aria-label="Content from ${item.url}"><strong>Content from:</strong> <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.url}</a><p>${Utils.escapeHtml(snippet)}${content.length > 1122 ? '...' : ''}</p></div>`;
-                    UIController.addHtmlMessage('ai', htmlSnippet);
-                    const plainTextSnippet = `Content from ${item.url}:\n${snippet}${content.length > 1122 ? '...' : ''}`;
-                    chatHistory.push({ role: 'assistant', content: plainTextSnippet });
-                }
             } catch (err) {
                 console.warn(`Web search failed:`, err);
                 UIController.clearStatus();
