@@ -50,6 +50,7 @@ Begin Reasoning Now:
 3. instant_answer(query) → returns a JSON object from DuckDuckGo's Instant Answer API for quick facts, definitions, and summaries (no proxies needed)
 
 For any question requiring up-to-date facts, statistics, or detailed content, choose the appropriate tool above. You may call read_url multiple times with different start and length parameters to paginate through longer pages.
+If a read_url result ends with an ellipsis ("..."), first evaluate whether the snippet is relevant to the user's original question. If it is, issue another read_url call with start set to your previous offset and length set to 5000 to fetch more content; if not, proceed with your reasoning and final answer.
 
 When calling a tool, output EXACTLY a JSON object and nothing else, in this format:
 {"tool":"web_search","arguments":{"query":"your query"}}
