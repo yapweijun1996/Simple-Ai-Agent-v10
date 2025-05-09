@@ -92,11 +92,19 @@ const ToolsService = (function() {
           const htmlString = await proxy.parseResponse(response);
           const parser = new DOMParser();
           const doc = parser.parseFromString(htmlString, 'text/html');
-          // Remove <script> and <style> elements to avoid including code in the text
+          // Remove <script> and <style> elements
           doc.querySelectorAll('script, style').forEach(el => el.remove());
-          // Extract only visible text content
-          const text = doc.body.textContent.trim();
-          return text || '';
+          // Extract text only from p, h1, h2, and h3 tags
+          const selectors = ['p', 'h1', 'h2', 'h3'];
+          const texts = [];
+          selectors.forEach(tag => {
+            doc.querySelectorAll(tag).forEach(el => {
+              const t = el.textContent.trim();
+              if (t) texts.push(t);
+            });
+          });
+          const resultText = texts.join('\n\n').trim();
+          return resultText;
         } catch (err) {
           console.warn(`Proxy ${proxy.name} failed: ${err.message}`);
         }
