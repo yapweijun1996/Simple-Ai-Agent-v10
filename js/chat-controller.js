@@ -619,9 +619,12 @@ Answer: [your final, concise answer based on the reasoning above]`;
             // Add plain text snippet to chat history for model processing
             const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${hasMore ? '...' : ''}`;
             chatHistory.push({ role: 'assistant', content: plainTextSnippet });
+            // Debug logs for read_url logic
+            console.log(`[read_url] url=${args.url}, fullLength=${String(result).length}, snippetLength=${snippet.length}, hasMore=${hasMore}`);
 
             // Auto-decision: ask AI if we should fetch more
             if (hasMore) {
+                console.log(`[read_url] Prompting AI for decision to fetch more (start=${start}, length=${length})`);
                 // Retrieve last user query
                 const lastUser = chatHistory.filter(m => m.role === 'user').pop().content;
                 const decisionPrompt = `User query: "${lastUser}"\nSnippet: "${snippet}"\n\nShould you fetch more content from this URL? Reply YES or NO.`;
@@ -634,17 +637,19 @@ Answer: [your final, concise answer based on the reasoning above]`;
                             { role: 'user', content: decisionPrompt }
                         ]);
                         const decisionText = decisionRes.choices[0].message.content.trim().toLowerCase();
+                        console.log(`[read_url] AI decision response: "${decisionText}"`);
                         shouldFetchMore = decisionText.startsWith('yes');
                     }
                 } catch (err) {
                     console.error('Decision fetch error:', err);
                 }
                 if (shouldFetchMore) {
+                    console.log(`[read_url] Fetching extended content slice from ${start + length} to ${start + length + 5000}`);
                     UIController.showStatus(`Fetching extended content from ${args.url}...`);
                     const extended = String(result).slice(start + length, start + length + 5000);
                     UIController.clearStatus();
                     const extHasMore = (start + length + 5000) < String(result).length;
-                    const extHtml = `<div class="tool-result" role="group" aria-label="Extended content from ${args.url}"><strong>Extended from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(extended)}${extHasMore ? '...' : ''}</p></div>`;
+                    const extHtml = `<div class=\"tool-result\" role=\"group\" aria-label=\"Extended content from ${args.url}\"><strong>Extended from:</strong> <a href=\"${args.url}\" target=\"_blank\" rel=\"noopener noreferrer\">${args.url}</a><p>${Utils.escapeHtml(extended)}${extHasMore ? '...' : ''}</p></div>`;
                     UIController.addHtmlMessage('ai', extHtml);
                     const extTextSnippet = `Extended content from ${args.url}:\n${extended}${extHasMore ? '...' : ''}`;
                     chatHistory.push({ role: 'assistant', content: extTextSnippet });
