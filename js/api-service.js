@@ -65,14 +65,15 @@ const ApiService = (function() {
      */
     async function sendOpenAIRequest(model, messages) {
         const payload = { model, messages };
-        const response = await Utils.fetchWithProxyRetry('https://api.openai.com/v1/chat/completions', {
+        const response = await Utils.fetchWithRetry('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
+            mode: 'cors',
             headers: { 
                 'Content-Type': 'application/json', 
                 'Authorization': 'Bearer ' + apiKey 
             },
             body: JSON.stringify(payload)
-        }, undefined, 3, 1000, 10000);
+        }, 3, 1000, 10000);
         
         if (!response.ok) {
             const errText = await response.text();
