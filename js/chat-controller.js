@@ -556,7 +556,7 @@ Answer: [your final, concise answer based on the reasoning above]`;
      * Executes a tool call, injects result into chat, and continues reasoning
      */
     async function processToolCall(call) {
-        const { tool, arguments: args } = call;
+        const { tool, arguments: args, skipContinue } = call;
         let result;
         // Show status while calling tool
         if (tool === 'web_search') {
@@ -574,10 +574,10 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 const plainTextResults = items.map((r, i) => `${i+1}. ${r.title} (${r.url}) - ${r.snippet}`).join('\n');
                 chatHistory.push({ role: 'assistant', content: `Search results for "${args.query}" (${items.length}):\n${plainTextResults}` });
 
-                // Automatically trigger read_url tool for each search result URL
+                // Automatically trigger read_url logic without restarting COT
                 for (const item of items) {
-                    // Leverage existing read_url logic (including 1122/5000 slicing)
-                    await processToolCall({ tool: 'read_url', arguments: { url: item.url, start: 0, length: 1122 } });
+                    // Trigger read_url logic without restarting COT
+                    await processToolCall({ tool: 'read_url', arguments: { url: item.url, start: 0, length: 1122 }, skipContinue: true });
                 }
             } catch (err) {
                 console.warn(`Web search failed:`, err);
@@ -655,12 +655,14 @@ Answer: [your final, concise answer based on the reasoning above]`;
         }
         // Clear status
         UIController.clearStatus();
-        // Continue Chain-of-Thought with updated history for the active model
-        const selectedModel = SettingsController.getSettings().selectedModel;
-        if (selectedModel.startsWith('gpt')) {
-            await handleOpenAIMessage(selectedModel, '');
-        } else {
-            await handleGeminiMessage(selectedModel, '');
+        // Continue Chain-of-Thought with updated history for the active model, unless skipped
+        if (!skipContinue) {
+            const selectedModel = SettingsController.getSettings().selectedModel;
+            if (selectedModel.startsWith('gpt')) {
+                await handleOpenAIMessage(selectedModel, '');
+            } else {
+                await handleGeminiMessage(selectedModel, '');
+            }
         }
     }
 
