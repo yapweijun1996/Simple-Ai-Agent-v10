@@ -573,6 +573,12 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 // Add plain text results to chat history for model processing
                 const plainTextResults = items.map((r, i) => `${i+1}. ${r.title} (${r.url}) - ${r.snippet}`).join('\n');
                 chatHistory.push({ role: 'assistant', content: `Search results for "${args.query}" (${items.length}):\n${plainTextResults}` });
+
+                // Automatically trigger read_url tool for each search result URL
+                for (const item of items) {
+                    // Leverage existing read_url logic (including 1122/5000 slicing)
+                    await processToolCall({ tool: 'read_url', arguments: { url: item.url, start: 0, length: 1122 } });
+                }
             } catch (err) {
                 console.warn(`Web search failed:`, err);
                 UIController.clearStatus();
