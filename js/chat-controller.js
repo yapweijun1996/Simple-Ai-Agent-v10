@@ -619,6 +619,37 @@ Answer: [your final, concise answer based on the reasoning above]`;
             // Add plain text snippet to chat history for model processing
             const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${hasMore ? '...' : ''}`;
             chatHistory.push({ role: 'assistant', content: plainTextSnippet });
+
+            // Auto-decision: ask AI if we should fetch more
+            if (hasMore) {
+                // Retrieve last user query
+                const lastUser = chatHistory.filter(m => m.role === 'user').pop().content;
+                const decisionPrompt = `User query: "${lastUser}"\nSnippet: "${snippet}"\n\nShould you fetch more content from this URL? Reply YES or NO.`;
+                let shouldFetchMore = false;
+                try {
+                    const selectedModel = SettingsController.getSettings().selectedModel;
+                    if (selectedModel.startsWith('gpt')) {
+                        const decisionRes = await ApiService.sendOpenAIRequest(selectedModel, [
+                            { role: 'system', content: 'You decide whether additional URL content is needed.' },
+                            { role: 'user', content: decisionPrompt }
+                        ]);
+                        const decisionText = decisionRes.choices[0].message.content.trim().toLowerCase();
+                        shouldFetchMore = decisionText.startsWith('yes');
+                    }
+                } catch (err) {
+                    console.error('Decision fetch error:', err);
+                }
+                if (shouldFetchMore) {
+                    UIController.showStatus(`Fetching extended content from ${args.url}...`);
+                    const extended = String(result).slice(start + length, start + 5000);
+                    UIController.clearStatus();
+                    const extHasMore = (start + 5000) < String(result).length;
+                    const extHtml = `<div class="tool-result" role="group" aria-label="Extended content from ${args.url}"><strong>Extended from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(extended)}${extHasMore ? '...' : ''}</p></div>`;
+                    UIController.addHtmlMessage('ai', extHtml);
+                    const extTextSnippet = `Extended content from ${args.url}:\n${extended}${extHasMore ? '...' : ''}`;
+                    chatHistory.push({ role: 'assistant', content: extTextSnippet });
+                }
+            }
         } else if (tool === 'instant_answer') {
             UIController.showStatus(`Retrieving instant answer for "${args.query}"...`);
             result = await ToolsService.instantAnswer(args.query);
