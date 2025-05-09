@@ -584,10 +584,10 @@ Answer: [your final, concise answer based on the reasoning above]`;
                         console.warn(`Failed to read ${item.url}:`, err);
                     }
                     UIController.clearStatus();
-                    const snippet = (content || '').slice(0, 500);
-                    const htmlSnippet = `<div class="tool-result" role="group" aria-label="Content from ${item.url}"><strong>Content from:</strong> <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.url}</a><p>${Utils.escapeHtml(snippet)}${content.length > 500 ? '...' : ''}</p></div>`;
+                    const snippet = (content || '').slice(0, 1122);
+                    const htmlSnippet = `<div class="tool-result" role="group" aria-label="Content from ${item.url}"><strong>Content from:</strong> <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.url}</a><p>${Utils.escapeHtml(snippet)}${content.length > 1122 ? '...' : ''}</p></div>`;
                     UIController.addHtmlMessage('ai', htmlSnippet);
-                    const plainTextSnippet = `Content from ${item.url}:\n${snippet}${content.length > 500 ? '...' : ''}`;
+                    const plainTextSnippet = `Content from ${item.url}:\n${snippet}${content.length > 1122 ? '...' : ''}`;
                     chatHistory.push({ role: 'assistant', content: plainTextSnippet });
                 }
             } catch (err) {
@@ -608,11 +608,11 @@ Answer: [your final, concise answer based on the reasoning above]`;
         } else if (tool === 'read_url') {
             UIController.showStatus(`Reading content from ${args.url}...`);
             result = await ToolsService.readUrl(args.url);
-            const snippet = String(result).slice(0, 500);
-            const html = `<div class="tool-result" role="group" aria-label="Read content from ${args.url}"><strong>Read from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(snippet)}${String(result).length > 500 ? '...' : ''}</p></div>`;
+            const snippet = String(result).slice(0, 1122);
+            const html = `<div class="tool-result" role="group" aria-label="Read content from ${args.url}"><strong>Read from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(snippet)}${String(result).length > 1122 ? '...' : ''}</p></div>`;
             UIController.addHtmlMessage('ai', html);
             // Add plain text snippet to chat history for model processing
-            const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${String(result).length > 500 ? '...' : ''}`;
+            const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${String(result).length > 1122 ? '...' : ''}`;
             chatHistory.push({ role: 'assistant', content: plainTextSnippet });
         } else if (tool === 'instant_answer') {
             UIController.showStatus(`Retrieving instant answer for "${args.query}"...`);
