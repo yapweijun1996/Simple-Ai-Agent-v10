@@ -92,7 +92,11 @@ const ToolsService = (function() {
           const htmlString = await proxy.parseResponse(response);
           const parser = new DOMParser();
           const doc = parser.parseFromString(htmlString, 'text/html');
-          return doc.body.textContent || '';
+          // Remove <script> and <style> elements to avoid including code in the text
+          doc.querySelectorAll('script, style').forEach(el => el.remove());
+          // Extract only visible text content
+          const text = doc.body.textContent.trim();
+          return text || '';
         } catch (err) {
           console.warn(`Proxy ${proxy.name} failed: ${err.message}`);
         }
