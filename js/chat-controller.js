@@ -49,8 +49,8 @@ Begin Reasoning Now:
 2. read_url(url[, start, length]) → returns the text content of a web page from position 'start' (default 0) up to 'length' characters (default 1122)
 3. instant_answer(query) → returns a JSON object from DuckDuckGo's Instant Answer API for quick facts, definitions, and summaries (no proxies needed)
 
-For any question requiring up-to-date facts, statistics, or detailed content, choose the appropriate tool above. You may call read_url multiple times with different start and length parameters to paginate through longer pages.
-If a read_url result ends with an ellipsis ("..."), first evaluate whether the snippet is relevant to the user's original question. If it is, issue another read_url call with start set to your previous offset and length set to 5000 to fetch more content; if not, proceed with your reasoning and final answer.
+For any question requiring up-to-date facts, statistics, or detailed content, choose the appropriate tool above. Use read_url to fetch initial snippets (default 1122 chars), then evaluate each snippet for relevance.
+If a snippet ends with an ellipsis ("..."), always determine whether fetching more text will improve your answer. If it will, output a new read_url tool call JSON with the same url, start at your previous offset, and length set to 5000 to retrieve the next segment. Repeat this process—issuing successive read_url calls—until the snippet no longer ends with "..." or you judge that additional content is not valuable. Only then continue reasoning toward your final answer.
 
 When calling a tool, output EXACTLY a JSON object and nothing else, in this format:
 {"tool":"web_search","arguments":{"query":"your query"}}
