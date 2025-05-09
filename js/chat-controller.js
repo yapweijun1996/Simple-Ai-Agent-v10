@@ -46,15 +46,14 @@ Begin Reasoning Now:
             role: 'system',
             content: `You are an AI assistant with access to three tools for external information:
 1. web_search(query) → returns a JSON array of search results [{title, url, snippet}, …]
-2. read_url(url) → returns the text content of a web page
+2. read_url(url[, start, length]) → returns the text content of a web page from position 'start' (default 0) up to 'length' characters (default 1122)
 3. instant_answer(query) → returns a JSON object from DuckDuckGo's Instant Answer API for quick facts, definitions, and summaries (no proxies needed)
 
 For any question requiring up-to-date facts, statistics, or concise definitions, choose the appropriate tool above and call it exactly once per question.
 
 When calling a tool, output EXACTLY a JSON object and nothing else, in this format:
 {"tool":"web_search","arguments":{"query":"your query"}}
-or
-{"tool":"read_url","arguments":{"url":"https://example.com"}}
+{"tool":"read_url","arguments":{"url":"https://example.com","start":0,"length":1122}}
 or
 {"tool":"instant_answer","arguments":{"query":"your query"}}
 
@@ -607,12 +606,18 @@ Answer: [your final, concise answer based on the reasoning above]`;
             }
         } else if (tool === 'read_url') {
             UIController.showStatus(`Reading content from ${args.url}...`);
+            // Fetch full page text
             result = await ToolsService.readUrl(args.url);
-            const snippet = String(result).slice(0, 1122);
+            // Determine slicing parameters
+            const start = (typeof args.start === 'number' && args.start >= 0) ? args.start : 0;
+            const length = (typeof args.length === 'number' && args.length > 0) ? args.length : 1122;
+            const snippet = String(result).slice(start, start + length);
             const html = `<div class="tool-result" role="group" aria-label="Read content from ${args.url}"><strong>Read from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(snippet)}${String(result).length > 1122 ? '...' : ''}</p></div>`;
             UIController.addHtmlMessage('ai', html);
             // Add plain text snippet to chat history for model processing
-            const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${String(result).length > 1122 ? '...' : ''}`;
+            const hasMore = (start + length) < String(result).length;
+            const ellipsis = hasMore ? '...' : '';
+            const plainTextSnippet = `Read content from ${args.url}:\n${snippet}${ellipsis}`;
             chatHistory.push({ role: 'assistant', content: plainTextSnippet });
         } else if (tool === 'instant_answer') {
             UIController.showStatus(`Retrieving instant answer for "${args.query}"...`);
