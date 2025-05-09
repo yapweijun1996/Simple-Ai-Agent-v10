@@ -641,9 +641,9 @@ Answer: [your final, concise answer based on the reasoning above]`;
                 }
                 if (shouldFetchMore) {
                     UIController.showStatus(`Fetching extended content from ${args.url}...`);
-                    const extended = String(result).slice(start + length, start + 5000);
+                    const extended = String(result).slice(start + length, start + length + 5000);
                     UIController.clearStatus();
-                    const extHasMore = (start + 5000) < String(result).length;
+                    const extHasMore = (start + length + 5000) < String(result).length;
                     const extHtml = `<div class="tool-result" role="group" aria-label="Extended content from ${args.url}"><strong>Extended from:</strong> <a href="${args.url}" target="_blank" rel="noopener noreferrer">${args.url}</a><p>${Utils.escapeHtml(extended)}${extHasMore ? '...' : ''}</p></div>`;
                     UIController.addHtmlMessage('ai', extHtml);
                     const extTextSnippet = `Extended content from ${args.url}:\n${extended}${extHasMore ? '...' : ''}`;
